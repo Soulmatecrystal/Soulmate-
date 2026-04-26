@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>確認訂單 — Checkout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: #f7f4ef;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding: 2rem 1.5rem 3rem;
+    }
+
+    .op-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .op-header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.2rem;
+      font-weight: 500;
+      color: #1a1a1a;
+      letter-spacing: 0.04em;
+    }
+
+    .op-header p {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    .steps {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 2.5rem;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #bbb;
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+
+    .step.active { color: #7c5c3a; background: rgba(124,92,58,0.08); }
+    .step.done { color: #999; }
+
+    .step-num {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      border: 1px solid #ddd;
+      background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+      flex-shrink: 0;
+      color: #bbb;
+    }
+
+    .step.active .step-num { background: #7c5c3a; border-color: #7c5c3a; color: #fff; }
+    .step.done .step-num { background: #e8e3dc; border-color: #e8e3dc; color: #999; }
+    .step-div { width: 28px; height: 1px; background: #e0dbd3; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 1.25rem;
+      max-width: 880px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 700px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: #fff;
+      border: 0.5px solid #e8e3dc;
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #1a1a1a;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 0.5px solid #f0ece6;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title-icon {
+      width: 22px; height: 22px;
+      background: #f7f4ef;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+    }
+
+    /* Products */
+    .prod { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid #f5f2ed; }
+    .prod:last-child { border-bottom: none; }
+
+    .prod-img {
+      width: 56px; height: 56px;
+      border-radius: 10px;
+      background: #f7f4ef;
+      border: 0.5px solid #ede9e2;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .prod-info { flex: 1; }
+    .prod-name { font-size: 13px; font-weight: 500; color: #1a1a1a; margin-bottom: 2px; }
+    .prod-var { font-size: 11px; color: #aaa; margin-bottom: 6px; }
+
+    .qty-ctrl { display: flex; align-items: center; border: 0.5px solid #e8e3dc; border-radius: 7px; overflow: hidden; width: fit-content; background: #fff; }
+
+    .qb {
+      width: 26px; height: 26px;
+      background: #f7f4ef;
+      border: none; cursor: pointer;
+      font-size: 15px; color: #888;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .qb:hover { background: #ede9e2; color: #1a1a1a; }
+
+    .qd {
+      width: 32px; height: 26px;
+      background: #fff;
+      border: none;
+      border-left: 0.5px solid #e8e3dc;
+      border-right: 0.5px solid #e8e3dc;
+      color: #1a1a1a; font-size: 13px;
+      text-align: center;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .prod-price { font-size: 14px; font-weight: 500; color: #7c5c3a; min-width: 68px; text-align: right; }
+
+    /* Form */
+    .fg { display: flex; flex-direction: column; gap: 5px; }
+    .fg.full { grid-column: 1 / -1; }
+    .fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+
+    @media (max-width: 480px) { .fgrid { grid-template-columns: 1fr; } .fg.full { grid-column: 1; } }
+
+    .flabel { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #aaa; }
+
+    .finput {
+      background: #faf8f5;
+      border: 0.5px solid #e8e3dc;
+      border-radius: 8px;
+      padding: 10px 13px;
+      color: #1a1a1a;
+      font-size: 14px;
+      font-family: 'Outfit', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+
+    .finput:focus { border-color: #7c5c3a; box-shadow: 0 0 0 3px rgba(124,92,58,0.08); }
+    .finput::placeholder { color: #ccc; }
+
+    /* Credit card */
+    .cc-visual {
+      background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+      position: relative;
+      overflow: hidden;
+      height: 120px;
+    }
+
+    .cc-chip {
+      width: 28px; height: 20px;
+      background: #c9a96e;
+      border-radius: 4px;
+      margin-bottom: 14px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .cc-chip::after {
+      content: '';
+      width: 18px; height: 12px;
+      border: 1px solid rgba(0,0,0,0.3);
+      border-radius: 2px;
+      display: block;
+    }
+
+    .cc-num-display {
+      font-family: 'Outfit', monospace;
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 10px;
+    }
+
+    .cc-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+    .cc-meta-label { font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 2px; }
+    .cc-meta-val { font-size: 12px; color: rgba(255,255,255,0.75); letter-spacing: 0.05em; }
+    .cc-brand { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.5); letter-spacing: 0.08em; text-transform: uppercase; }
+
+    .cc-deco {
+      position: absolute; right: -20px; top: -20px;
+      width: 100px; height: 100px;
+      border-radius: 50%; background: rgba(201,169,110,0.08);
+    }
+
+    .cc-deco2 {
+      position: absolute; right: 20px; top: 20px;
+      width: 60px; height: 60px;
+      border-radius: 50%; background: rgba(201,169,110,0.06);
+    }
+
+    .cc-fields { display: grid; grid-template-columns: 1fr; gap: 11px; }
+    .cc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+
+    /* Coupon */
+    .coup-row { display: flex; gap: 10px; }
+    .coup-row .finput { flex: 1; }
+
+    .btn-apply {
+      background: #fff;
+      border: 0.5px solid #7c5c3a;
+      color: #7c5c3a;
+      border-radius: 8px;
+      padding: 0 16px;
+      font-size: 13px;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-apply:hover { background: #7c5c3a; color: #fff; }
+
+    .coup-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(124,92,58,0.07);
+      border: 0.5px solid rgba(124,92,58,0.2);
+      color: #7c5c3a;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-top: 10px;
+    }
+
+    .coup-tag span { cursor: pointer; opacity: 0.5; }
+    .coup-tag span:hover { opacity: 1; }
+    .coup-note { font-size: 11px; color: #bbb; margin-top: 8px; }
+
+    /* Payment tabs */
+    .pay-tabs { display: flex; gap: 8px; margin-bottom: 1.25rem; }
+
+    .pay-tab {
+      flex: 1;
+      padding: 10px 8px;
+      background: #faf8f5;
+      border: 0.5px solid #e8e3dc;
+      border-radius: 9px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .pay-tab.active { background: #7c5c3a; border-color: #7c5c3a; }
+    .pay-tab-icon { font-size: 18px; margin-bottom: 3px; }
+    .pay-tab-label { font-size: 11px; color: #888; }
+    .pay-tab.active .pay-tab-label { color: rgba(255,255,255,0.85); }
+
+    .pay-content { display: none; }
+    .pay-content.show { display: block; }
+
+    /* Summary */
+    .sum-card {
+      background: #fff;
+      border: 0.5px solid #e8e3dc;
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      position: sticky;
+      top: 1rem;
+    }
+
+    .sum-row { display: flex; justify-content: space-between; font-size: 13px; color: #999; margin-bottom: 9px; }
+    .sum-row.disc { color: #4a9669; }
+    .sum-row.total { font-size: 16px; color: #1a1a1a; font-weight: 500; padding-top: 12px; margin-top: 12px; border-top: 0.5px solid #f0ece6; margin-bottom: 0; }
+
+    .btn-order {
+      width: 100%;
+      background: #7c5c3a;
+      border: none;
+      border-radius: 10px;
+      padding: 15px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 500;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+
+    .btn-order:hover { background: #6a4e30; transform: translateY(-1px); }
+    .btn-order:active { transform: translateY(0); }
+
+    .sec-note { text-align: center; font-size: 11px; color: #ccc; margin-top: 10px; letter-spacing: 0.04em; }
+
+    .badge { background: rgba(124,92,58,0.1); color: #7c5c3a; font-size: 10px; padding: 2px 7px; border-radius: 10px; }
+
+    .toast {
+      display: none;
+      position: fixed;
+      top: 20px; right: 20px;
+      background: #fff;
+      border: 0.5px solid #b8d4c0;
+      color: #3a7a52;
+      font-size: 13px;
+      padding: 12px 18px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      z-index: 999;
+      animation: sIn 0.3s ease;
+    }
+
+    @keyframes sIn { from { opacity:0; transform: translateX(16px); } to { opacity:1; transform: translateX(0); } }
+  </style>
+</head>
+<body>
+
+  <div class="op-header">
+    <h1>確認訂單</h1>
+    <p>Secure Checkout</p>
+  </div>
+
+  <div class="steps">
+    <div class="step done"><div class="step-num">✓</div>購物車</div>
+    <div class="step-div"></div>
+    <div class="step active"><div class="step-num">2</div>結帳資訊</div>
+    <div class="step-div"></div>
+    <div class="step"><div class="step-num">3</div>訂單完成</div>
+  </div>
+
+  <div class="layout">
+    <div>
+
+      <!-- Products -->
+      <div class="card">
+        <div class="card-title"><div class="card-title-icon">🛍</div>購物明細</div>
+
+        <div class="prod">
+          <div class="prod-img">👟</div>
+          <div class="prod-info">
+            <div class="prod-name">極簡運動鞋 <span class="badge">New</span></div>
+            <div class="prod-var">米白 / 尺寸 42</div>
+            <div class="qty-ctrl">
+              <button class="qb" onclick="cq(0,-1)">−</button>
+              <input class="qd" id="q0" value="1" readonly>
+              <button class="qb" onclick="cq(0,1)">+</button>
+            </div>
+          </div>
+          <div class="prod-price" id="p0">NT$2,490</div>
+        </div>
+
+        <div class="prod">
+          <div class="prod-img">🧥</div>
+          <div class="prod-info">
+            <div class="prod-name">輕量防風外套</div>
+            <div class="prod-var">深灰 / 尺寸 M</div>
+            <div class="qty-ctrl">
+              <button class="qb" onclick="cq(1,-1)">−</button>
+              <input class="qd" id="q1" value="1" readonly>
+              <button class="qb" onclick="cq(1,1)">+</button>
+            </div>
+          </div>
+          <div class="prod-price" id="p1">NT$3,890</div>
+        </div>
+
+        <div class="prod">
+          <div class="prod-img">🎒</div>
+          <div class="prod-info">
+            <div class="prod-name">都市後背包</div>
+            <div class="prod-var">黑色 / 標準</div>
+            <div class="qty-ctrl">
+              <button class="qb" onclick="cq(2,-1)">−</button>
+              <input class="qd" id="q2" value="1" readonly>
+              <button class="qb" onclick="cq(2,1)">+</button>
+            </div>
+          </div>
+          <div class="prod-price" id="p2">NT$1,990</div>
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="card">
+        <div class="card-title"><div class="card-title-icon">📍</div>配送地址</div>
+        <div class="fgrid">
+          <div class="fg"><div class="flabel">姓名</div><input class="finput" placeholder="王小明"></div>
+          <div class="fg"><div class="flabel">電話</div><input class="finput" placeholder="0912-345-678"></div>
+          <div class="fg"><div class="flabel">縣市</div>
+            <select class="finput" style="cursor:pointer">
+              <option value="">請選擇縣市</option>
+              <option>台北市</option><option>新北市</option><option>桃園市</option><option>台中市</option><option>高雄市</option>
+            </select>
+          </div>
+          <div class="fg"><div class="flabel">郵遞區號</div><input class="finput" placeholder="100" maxlength="5"></div>
+          <div class="fg full"><div class="flabel">詳細地址</div><input class="finput" placeholder="區域、路名、門牌號碼"></div>
+        </div>
+      </div>
+
+      <!-- Payment -->
+      <div class="card">
+        <div class="card-title"><div class="card-title-icon">💳</div>付款方式</div>
+
+        <div class="pay-tabs">
+          <div class="pay-tab active" onclick="switchTab(0)">
+            <div class="pay-tab-icon">💳</div>
+            <div class="pay-tab-label">信用卡</div>
+          </div>
+          <div class="pay-tab" onclick="switchTab(1)">
+            <div class="pay-tab-icon">📱</div>
+            <div class="pay-tab-label">LINE Pay</div>
+          </div>
+          <div class="pay-tab" onclick="switchTab(2)">
+            <div class="pay-tab-icon">🏦</div>
+            <div class="pay-tab-label">ATM</div>
+          </div>
+          <div class="pay-tab" onclick="switchTab(3)">
+            <div class="pay-tab-icon">🏪</div>
+            <div class="pay-tab-label">超商</div>
+          </div>
+        </div>
+
+        <!-- Credit card -->
+        <div class="pay-content show" id="tab0">
+          <div class="cc-visual">
+            <div class="cc-deco"></div>
+            <div class="cc-deco2"></div>
+            <div class="cc-chip"></div>
+            <div class="cc-num-display" id="ccDisplay">•••• &nbsp;•••• &nbsp;•••• &nbsp;••••</div>
+            <div class="cc-bottom">
+              <div>
+                <div class="cc-meta-label">持卡人</div>
+                <div class="cc-meta-val" id="ccName">YOUR NAME</div>
+              </div>
+              <div>
+                <div class="cc-meta-label">有效期限</div>
+                <div class="cc-meta-val" id="ccExp">MM / YY</div>
+              </div>
+              <div class="cc-brand" id="ccBrand">VISA</div>
+            </div>
+          </div>
+
+          <div class="cc-fields">
+            <div class="fg">
+              <div class="flabel">卡號</div>
+              <input class="finput" id="ccNum" placeholder="1234 5678 9012 3456" maxlength="19"
+                oninput="fmtCard(this)" style="letter-spacing:0.05em; font-family:'Outfit',monospace">
+            </div>
+            <div class="fg">
+              <div class="flabel">持卡人姓名</div>
+              <input class="finput" id="ccHolder" placeholder="王小明" oninput="updName(this)">
+            </div>
+            <div class="cc-row">
+              <div class="fg">
+                <div class="flabel">有效期限</div>
+                <input class="finput" id="ccExpiry" placeholder="MM / YY" maxlength="7" oninput="fmtExp(this)">
+              </div>
+              <div class="fg">
+                <div class="flabel">安全碼 CVV</div>
+                <input class="finput" placeholder="•••" maxlength="4" type="password">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pay-content" id="tab1">
+          <div style="background:#f7f4ef;border-radius:10px;padding:1.25rem;text-align:center">
+            <div style="font-size:32px;margin-bottom:8px">📱</div>
+            <div style="font-size:14px;font-weight:500;color:#1a1a1a;margin-bottom:4px">LINE Pay</div>
+            <div style="font-size:12px;color:#aaa">確認訂單後將跳轉至 LINE Pay 完成付款</div>
+          </div>
+        </div>
+
+        <div class="pay-content" id="tab2">
+          <div style="background:#f7f4ef;border-radius:10px;padding:1.25rem;text-align:center">
+            <div style="font-size:32px;margin-bottom:8px">🏦</div>
+            <div style="font-size:14px;font-weight:500;color:#1a1a1a;margin-bottom:4px">ATM 轉帳</div>
+            <div style="font-size:12px;color:#aaa">確認訂單後將提供虛擬帳號，請於 3 天內完成匯款</div>
+          </div>
+        </div>
+
+        <div class="pay-content" id="tab3">
+          <div style="background:#f7f4ef;border-radius:10px;padding:1.25rem;text-align:center">
+            <div style="font-size:32px;margin-bottom:8px">🏪</div>
+            <div style="font-size:14px;font-weight:500;color:#1a1a1a;margin-bottom:4px">超商付款</div>
+            <div style="font-size:12px;color:#aaa">支援 7-11、全家、萊爾富，確認後取得繳費條碼</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coupon -->
+      <div class="card">
+        <div class="card-title"><div class="card-title-icon">🏷</div>優惠券</div>
+        <div class="coup-row">
+          <input class="finput" id="cpInput" placeholder="輸入優惠碼">
+          <button class="btn-apply" onclick="applyCP()">套用</button>
+        </div>
+        <div id="cpTag" style="display:none">
+          <div class="coup-tag">SUMMER20 — 折扣 20% <span onclick="removeCP()">✕</span></div>
+        </div>
+        <p class="coup-note">試試：<strong style="color:#7c5c3a">SUMMER20</strong> 享 20% 折扣</p>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div>
+      <div class="sum-card">
+        <div class="card-title" style="font-size:14px"><div class="card-title-icon">📋</div>訂單摘要</div>
+        <div class="sum-row"><span>商品小計</span><span id="sub">NT$8,370</span></div>
+        <div class="sum-row"><span>運費</span><span id="ship">免費</span></div>
+        <div class="sum-row disc" id="dRow" style="display:none"><span>優惠折扣</span><span id="dAmt">−NT$1,674</span></div>
+        <div class="sum-row total"><span>應付總計</span><span id="tot">NT$8,370</span></div>
+      </div>
+
+      <button class="btn-order" onclick="placeOrder()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        確認下單
+      </button>
+      <p class="sec-note">🔒 SSL 256-bit 加密 · 安全付款</p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">✓ 訂單已送出！感謝您的購買</div>
+
+  <script>
+    const baseP = [2490, 3890, 1990];
+    let qtys = [1,1,1];
+    let cpOn = false;
+
+    function cq(i, d) {
+      qtys[i] = Math.max(1, qtys[i] + d);
+      document.getElementById('q'+i).value = qtys[i];
+      document.getElementById('p'+i).textContent = 'NT$' + (baseP[i]*qtys[i]).toLocaleString();
+      updSum();
+    }
+
+    function updSum() {
+      const sub = qtys.reduce((s,q,i) => s + q*baseP[i], 0);
+      document.getElementById('sub').textContent = 'NT$' + sub.toLocaleString();
+      const ship = sub >= 5000 ? 0 : 100;
+      document.getElementById('ship').textContent = ship === 0 ? '免費' : 'NT$'+ship;
+      const disc = cpOn ? Math.round(sub*0.2) : 0;
+      document.getElementById('dRow').style.display = cpOn ? 'flex' : 'none';
+      if (cpOn) document.getElementById('dAmt').textContent = '−NT$' + disc.toLocaleString();
+      document.getElementById('tot').textContent = 'NT$' + (sub + ship - disc).toLocaleString();
+    }
+
+    function applyCP() {
+      const v = document.getElementById('cpInput').value.trim().toUpperCase();
+      if (v === 'SUMMER20') {
+        cpOn = true;
+        document.getElementById('cpTag').style.display = 'block';
+        document.getElementById('cpInput').value = '';
+        updSum();
+      } else {
+        const inp = document.getElementById('cpInput');
+        inp.style.borderColor = '#e0a090';
+        setTimeout(() => inp.style.borderColor = '', 1500);
+      }
+    }
+
+    function removeCP() {
+      cpOn = false;
+      document.getElementById('cpTag').style.display = 'none';
+      updSum();
+    }
+
+    function switchTab(idx) {
+      document.querySelectorAll('.pay-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+      document.querySelectorAll('.pay-content').forEach((c,i) => c.classList.toggle('show', i===idx));
+    }
+
+    function fmtCard(el) {
+      let v = el.value.replace(/\D/g,'').slice(0,16);
+      el.value = v.replace(/(.{4})/g,'$1 ').trim();
+      const disp = v.padEnd(16,'•');
+      const parts = [disp.slice(0,4), disp.slice(4,8), disp.slice(8,12), disp.slice(12,16)];
+      document.getElementById('ccDisplay').innerHTML = parts.join('&nbsp;&nbsp;');
+      const brand = v[0]==='4' ? 'VISA' : v[0]==='5' ? 'MASTERCARD' : (v.slice(0,2)==='34'||v.slice(0,2)==='37') ? 'AMEX' : 'VISA';
+      document.getElementById('ccBrand').textContent = brand;
+    }
+
+    function updName(el) {
+      document.getElementById('ccName').textContent = el.value.toUpperCase() || 'YOUR NAME';
+    }
+
+    function fmtExp(el) {
+      let v = el.value.replace(/\D/g,'').slice(0,4);
+      if (v.length >= 2) v = v.slice(0,2) + ' / ' + v.slice(2);
+      el.value = v;
+      document.getElementById('ccExp').textContent = v || 'MM / YY';
+    }
+
+    function placeOrder() {
+      const t = document.getElementById('toast');
+      t.style.display = 'block';
+      setTimeout(() => t.style.display = 'none', 3000);
+    }
+  </script>
+</body>
+</html>
